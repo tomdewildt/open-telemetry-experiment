@@ -1,0 +1,111 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: open-telemetry-experiment-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./.docker/postgres:/var/lib/postgresql/data
+    networks:
+      - apps-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: open-telemetry-experiment-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - apps-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  service:
+    build: ./apps/service
+    container_name: open-telemetry-experiment-service
+    ports:
+      - "8002:8000"
+    networks:
+      - apps-network
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  worker-api:
+    build: ./apps/worker
+    image: open-telemetry-experiment-worker
+    container_name: open-telemetry-experiment-worker-api
+    command: uv run uvicorn open_telemetry_experiment_worker.app:create_app --factory --host 0.0.0.0 --port 8000
+    environment:
+      WORKER_REDIS_URL: redis://redis:6379
+      WORKER_SERVICE_BASE_URL: http://service:8000/api/v1
+    ports:
+      - "8001:8000"
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - apps-network
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  worker-worker:
+    build: ./apps/worker
+    image: open-telemetry-experiment-worker
+    container_name: open-telemetry-experiment-worker-worker
+    command: uv run saq open_telemetry_experiment_worker.worker.settings
+    environment:
+      WORKER_REDIS_URL: redis://redis:6379
+      WORKER_SERVICE_BASE_URL: http://service:8000/api/v1
+    depends_on:
+      redis:
+        condition: service_healthy
+      service:
+        condition: service_healthy
+    networks:
+      - apps-network
+
+  web:
+    build: ./apps/web
+    container_name: open-telemetry-experiment-web
+    environment:
+      WEB_DATABASE_URL: postgres://postgres:postgres@postgres:5432/postgres
+      WEB_WORKER_API_BASE_URL: http://worker-api:8000/api/v1
+      WEB_BASE_URL: http://web:3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      worker-api:
+        condition: service_healthy
+    networks:
+      - apps-network
+    healthcheck:
+      test: ["CMD-SHELL", "bun -e \"const r = await fetch('http://localhost:3000/api/health'); process.exit(r.ok ? 0 : 1)\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+networks:
+  apps-network:
+    driver: bridge
