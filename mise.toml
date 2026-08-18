@@ -1,0 +1,62 @@
+monorepo_root = true
+
+[tools]
+python = "3.12"
+node = "24"
+bun = "latest"
+
+[monorepo]
+config_roots = ["apps/*"]
+
+[env]
+COMPOSE_APPS = "-f docker-compose.apps.yaml"
+COMPOSE_APPS_DEV = "-f docker-compose.apps.yaml -f docker-compose.apps.dev.yaml"
+COMPOSE_APPS_PROD = "-f docker-compose.apps.yaml -f docker-compose.apps.prod.yaml"
+COMPOSE_SIGNOZ = "-f docker-compose.signoz.yaml"
+
+[tasks.init]
+description = "Initialize the environment for all apps"
+run = "mise run //apps/...:init"
+
+[tasks.lock]
+description = "Refresh dependency locks for all apps"
+run = "mise run //apps/...:lock"
+
+[tasks.start]
+description = "Run the apps and signoz"
+run = [
+    "docker compose $COMPOSE_SIGNOZ up -d",
+    "docker compose $COMPOSE_APPS_DEV up --build",
+]
+
+[tasks."dev:start"]
+description = "Run the apps (dev)"
+run = "docker compose $COMPOSE_APPS_DEV up --build"
+
+[tasks."prod:start"]
+description = "Run the apps (prod)"
+run = "docker compose $COMPOSE_APPS_PROD up --build"
+
+[tasks."signoz:start"]
+description = "Start the signoz stack"
+run = "docker compose $COMPOSE_SIGNOZ up -d"
+
+[tasks."signoz:logs"]
+description = "Follow the signoz stack logs"
+run = "docker compose $COMPOSE_SIGNOZ logs -f"
+
+[tasks."signoz:stop"]
+description = "Stop the signoz stack"
+run = "docker compose $COMPOSE_SIGNOZ down"
+
+[tasks.lint]
+description = "Run lint check for all apps"
+run = "mise run //apps/...:lint"
+
+[tasks.format]
+description = "Run format check for all apps"
+run = "mise run //apps/...:format"
+
+[tasks.types]
+description = "Run type check for all apps"
+run = "mise run //apps/...:types"
