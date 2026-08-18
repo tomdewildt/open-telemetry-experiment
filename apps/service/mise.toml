@@ -1,0 +1,23 @@
+[tasks.init]
+description = "Initialize the environment"
+run = "uv sync"
+
+[tasks.lock]
+description = "Refresh the dependency lock"
+run = "uv lock"
+
+[tasks.start]
+description = "Run the service api"
+run = "uv run uvicorn open_telemetry_experiment_service.app:create_app --factory --reload"
+
+[tasks.lint]
+description = "Run lint check"
+run = "uv run ruff check src/"
+
+[tasks.format]
+description = "Run format check"
+run = "uv run ruff format src/"
+
+[tasks.types]
+description = "Run type check"
+run = "uv run pyright src/"
