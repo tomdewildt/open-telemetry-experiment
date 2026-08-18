@@ -1,0 +1,23 @@
+[tasks.init]
+description = "Initialize the environment"
+run = "bun install"
+
+[tasks.lock]
+description = "Refresh the dependency lock"
+run = "bun update"
+
+[tasks.start]
+description = "Run the web app"
+run = "bun run dev"
+
+[tasks.lint]
+description = "Run lint check"
+run = "bun run lint"
+
+[tasks.format]
+description = "Run format check"
+run = "bun run format"
+
+[tasks.types]
+description = "Run type check"
+run = "bun run types"

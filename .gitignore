@@ -448,3 +448,6 @@ $RECYCLE.BIN/
 ### Custom ###
 # Docker
 .docker
+
+# Track the web application lib directory (overrides the "lib" packaging rule)
+!apps/web/src/lib/
