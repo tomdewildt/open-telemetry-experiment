@@ -4,19 +4,18 @@ import { config } from "@/config";
 import { db } from "@/db";
 import { requests } from "@/db/schema";
 import { withApi } from "@/lib/api";
-import { HttpError } from "@/lib/errors";
 import { shouldFail } from "@/lib/failure";
-import { submitSchema, validate } from "@/lib/schemas";
+import { submitSchema } from "@/lib/schemas";
 import { getLogger, getRequestId } from "@/logging";
 
 const logger = getLogger("app.api.submit");
 
 export const POST = withApi(async (request) => {
   if (shouldFail(config.SERVER_FAILURE_RATE)) {
-    throw new HttpError(500, "injected failure");
+    return NextResponse.json({ message: "injected failure" }, { status: 500 });
   }
 
-  const { text } = validate(submitSchema, await request.json());
+  const { text } = submitSchema.parse(await request.json());
   const requestId = crypto.randomUUID();
   const correlationId = getRequestId();
 
