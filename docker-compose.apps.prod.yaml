@@ -1,0 +1,23 @@
+services:
+  service:
+    environment:
+      SERVICE_ENV: prod
+
+  worker-api:
+    environment:
+      WORKER_ENV: prod
+      WORKER_REDIS_URL: redis://redis:6379
+      WORKER_SERVICE_BASE_URL: http://service:8000/api/v1
+
+  worker-worker:
+    environment:
+      WORKER_ENV: prod
+      WORKER_REDIS_URL: redis://redis:6379
+      WORKER_SERVICE_BASE_URL: http://service:8000/api/v1
+
+  web:
+    build:
+      context: ./apps/web
+      target: runner
+    environment:
+      WEB_ENV: prod
