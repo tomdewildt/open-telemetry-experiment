@@ -1,0 +1,31 @@
+[tasks.init]
+description = "Initialize the environment"
+run = "uv sync"
+
+[tasks.lock]
+description = "Refresh the dependency lock"
+run = "uv lock"
+
+[tasks.start]
+description = "Run the worker api and saq worker"
+depends = ["api:start", "worker:start"]
+
+[tasks."api:start"]
+description = "Run the worker api"
+run = "uv run uvicorn open_telemetry_experiment_worker.app:create_app --factory --reload"
+
+[tasks."worker:start"]
+description = "Run the saq worker"
+run = "uv run saq open_telemetry_experiment_worker.worker.settings"
+
+[tasks.lint]
+description = "Run lint check"
+run = "uv run ruff check src/"
+
+[tasks.format]
+description = "Run format check"
+run = "uv run ruff format src/"
+
+[tasks.types]
+description = "Run type check"
+run = "uv run pyright src/"
