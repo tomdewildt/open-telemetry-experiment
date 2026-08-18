@@ -3,10 +3,10 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { requests } from "@/db/schema";
 import { withApi } from "@/lib/api";
-import { callbackSchema, validate } from "@/lib/schemas";
+import { callbackSchema } from "@/lib/schemas";
 
 export const POST = withApi(async (request) => {
-  const { request_id, status, result, error } = validate(callbackSchema, await request.json());
+  const { request_id, status, result, error } = callbackSchema.parse(await request.json());
 
   await db
     .update(requests)

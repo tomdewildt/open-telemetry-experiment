@@ -7,23 +7,22 @@ import pino from "pino";
 
 export const requestContext = new AsyncLocalStorage<{ requestId: string }>();
 
-// Map pino's numeric levels onto the loguru level names used by the python apps.
-const LEVEL_NAMES: Record<number, string> = {
-  10: "TRACE",
-  20: "DEBUG",
-  30: "INFO",
-  40: "WARNING",
-  50: "ERROR",
-  60: "CRITICAL",
+const LEVEL_NAMES: Record<string, string> = {
+  trace: "TRACE",
+  debug: "DEBUG",
+  info: "INFO",
+  warn: "WARNING",
+  error: "ERROR",
+  fatal: "CRITICAL",
 };
 
-const LEVEL_COLORS: Record<number, string> = {
-  10: "\x1b[36m",
-  20: "\x1b[34m",
-  30: "\x1b[32m",
-  40: "\x1b[33m",
-  50: "\x1b[31m",
-  60: "\x1b[41m",
+const LEVEL_COLORS: Record<string, string> = {
+  trace: "\x1b[36m",
+  debug: "\x1b[34m",
+  info: "\x1b[32m",
+  warn: "\x1b[33m",
+  error: "\x1b[31m",
+  fatal: "\x1b[41m",
 };
 
 const GREEN = "\x1b[32m";
@@ -51,16 +50,16 @@ const prettyStream = new Writable({
       return;
     }
 
-    const level = record.level as number;
+    const level = record.level as string;
     const color = LEVEL_COLORS[level] ?? "";
-    const levelName = (LEVEL_NAMES[level] ?? String(level)).padEnd(8);
+    const levelName = (LEVEL_NAMES[level] ?? level.toUpperCase()).padEnd(8);
     const time = formatTime(record.time as number);
     const name = (record.name as string) ?? "-";
-    const requestId = record.requestId as string | undefined;
-    const rid = requestId ? ` | ${BLUE}[${requestId}]${RESET}` : "";
+    const correlationId = record.correlation_id as string | undefined;
+    const cid = correlationId ? ` | ${BLUE}[${correlationId}]${RESET}` : "";
     const stack = (record.err as { stack?: string } | undefined)?.stack;
 
-    let line = `${GREEN}${time}${RESET} | ${color}${levelName}${RESET} | ${CYAN}${name}${RESET}${rid} - ${color}${record.msg}${RESET}\n`;
+    let line = `${GREEN}${time}${RESET} | ${color}${levelName}${RESET} | ${CYAN}${name}${RESET}${cid} - ${color}${record.msg}${RESET}\n`;
     if (stack) line += `${stack}\n`;
 
     process.stdout.write(line);
@@ -72,10 +71,13 @@ export const logger = pino(
   {
     level: config.LOG_LEVEL,
     base: undefined,
+    formatters: {
+      level: (label) => ({ level: label }),
+    },
     serializers: { err: pino.stdSerializers.err },
     mixin() {
       const store = requestContext.getStore();
-      return store ? { requestId: store.requestId } : {};
+      return store ? { correlation_id: store.requestId } : {};
     },
   },
   config.ENV === "dev" ? prettyStream : process.stdout,
@@ -89,8 +91,8 @@ export function getRequestId(): string | undefined {
   return requestContext.getStore()?.requestId;
 }
 
-// Global access log: patch node's http server to log every request on finish,
-// which is the only place in Next.js that sees the final status + duration.
+// Patch node's http server to log every request on finish, which is the only place in Next.js that sees
+// the final status + duration.
 let accessLogInitialized = false;
 
 export function initAccessLog(): void {
@@ -98,10 +100,16 @@ export function initAccessLog(): void {
   accessLogInitialized = true;
 
   const accessLogger = getLogger("app.access");
-  const proto = http.Server.prototype as unknown as { emit: (event: string, ...args: unknown[]) => boolean };
+  const proto = http.Server.prototype as unknown as {
+    emit: (event: string, ...args: unknown[]) => boolean;
+  };
   const originalEmit = proto.emit;
 
-  proto.emit = function (this: unknown, event: string, ...args: unknown[]): boolean {
+  proto.emit = function (
+    this: unknown,
+    event: string,
+    ...args: unknown[]
+  ): boolean {
     if (event === "request") {
       const req = args[0] as http.IncomingMessage;
       const res = args[1] as http.ServerResponse;
@@ -109,10 +117,18 @@ export function initAccessLog(): void {
       res.on("finish", () => {
         const url = req.url ?? "";
         if (url.startsWith("/_next/") || url === "/favicon.ico") return;
-        const requestId = res.getHeader("x-request-id");
+        const correlationId = res.getHeader("x-request-id");
+        const duration = Math.round(performance.now() - start);
         accessLogger.info(
-          { requestId: typeof requestId === "string" ? requestId : undefined },
-          `${req.method} ${url} ${res.statusCode} (${Math.round(performance.now() - start)}ms)`,
+          {
+            correlation_id:
+              typeof correlationId === "string" ? correlationId : undefined,
+            method: req.method,
+            path: url,
+            status: res.statusCode,
+            duration,
+          },
+          `${req.method} ${url} ${res.statusCode} (${duration}ms)`,
         );
       });
     }
@@ -120,8 +136,7 @@ export function initAccessLog(): void {
   };
 }
 
-// Route console.* (used by Next's dev logger and any library) through pino,
-// mirroring the python apps that funnel stdlib logging into loguru.
+// Route console.* (used by next.js dev logger and any library) through pino.
 export function initLogging(): void {
   const target = logger.child({ name: "console" });
   const levels = {

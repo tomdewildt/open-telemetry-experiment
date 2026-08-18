@@ -449,5 +449,5 @@ $RECYCLE.BIN/
 # Docker
 .docker
 
-# Track the web application lib directory (overrides the "lib" packaging rule)
+# Web (overrides the "[Ll]ib" section above)
 !apps/web/src/lib/
