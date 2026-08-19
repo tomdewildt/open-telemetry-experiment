@@ -7,6 +7,7 @@ from open_telemetry_experiment_service.config import Environment, config
 from open_telemetry_experiment_service.logging import init_logging
 from open_telemetry_experiment_service.middleware import AccessLogMiddleware
 from open_telemetry_experiment_service.routes import router
+from open_telemetry_experiment_service.telemetry import init_telemetry
 from open_telemetry_experiment_service.utils import (
     config_handler,
     health_handler,
@@ -56,5 +57,8 @@ def create_app() -> FastAPI:
     api = APIRouter(prefix="/api/v1")
     api.include_router(router)
     app.include_router(api)
+
+    # Setup telemetry
+    init_telemetry(app)
 
     return app
