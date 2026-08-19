@@ -49,6 +49,14 @@ run = "docker compose $COMPOSE_SIGNOZ logs -f"
 description = "Stop the signoz stack"
 run = "docker compose $COMPOSE_SIGNOZ down"
 
+[tasks."signoz:reset"]
+description = "Reset the signoz telemetry data (traces, logs, metrics)"
+run = [
+    "docker compose $COMPOSE_SIGNOZ down",
+    "rm -rf .docker/clickhouse .docker/zookeeper",
+    "docker compose $COMPOSE_SIGNOZ up -d",
+]
+
 [tasks.lint]
 description = "Run lint check for all apps"
 run = "mise run //apps/...:lint"
