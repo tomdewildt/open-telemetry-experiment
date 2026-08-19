@@ -45,5 +45,10 @@ class ServiceConfig(BaseSettings):
 
     FAILURE_RATE: float = 0.3
 
+    OTEL_ENABLED: bool = False
+    OTEL_ENDPOINT: str = "http://host.docker.internal:4318"
+    OTEL_SERVICE_NAMESPACE: str = "opentelemetry"
+    OTEL_SERVICE_NAME: str = "service"
+
 
 config = ServiceConfig()

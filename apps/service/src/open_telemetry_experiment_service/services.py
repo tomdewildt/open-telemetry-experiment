@@ -1,10 +1,13 @@
 import random
 
-from fastapi import HTTPException
 from loguru import logger
 
 from open_telemetry_experiment_service.config import config
 from open_telemetry_experiment_service.schemas import ProcessResponse
+
+
+class ProcessingError(Exception):
+    pass
 
 
 class ProcessService:
@@ -13,7 +16,7 @@ class ProcessService:
 
         if _should_fail():
             logger.error("Injected failure while processing (text={text})", text=text)
-            raise HTTPException(status_code=500, detail="injected failure")
+            raise ProcessingError("injected failure")
 
         result = ProcessResponse(result=text.upper(), word_count=len(text.split()))
 

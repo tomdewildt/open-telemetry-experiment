@@ -41,6 +41,7 @@ def http_exception_handler(_: Request, exc: HTTPException) -> JSONResponse:
 
 
 async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    # The exception propagated through the otel middleware, which already recorded it.
     return JSONResponse({"message": "Internal server error"}, status_code=HTTP_500_INTERNAL_SERVER_ERROR)
 
 
