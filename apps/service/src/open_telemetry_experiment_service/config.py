@@ -49,6 +49,7 @@ class ServiceConfig(BaseSettings):
     OTEL_ENDPOINT: str = "http://host.docker.internal:4318"
     OTEL_SERVICE_NAMESPACE: str = "opentelemetry"
     OTEL_SERVICE_NAME: str = "service"
+    OTEL_SAMPLE_RATIO: float = 1.0
 
 
 config = ServiceConfig()
