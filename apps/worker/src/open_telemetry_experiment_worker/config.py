@@ -52,5 +52,11 @@ class WorkerConfig(BaseSettings):
     API_FAILURE_RATE: float = 0.1
     WORKER_FAILURE_RATE: float = 0.1
 
+    OTEL_ENABLED: bool = False
+    OTEL_ENDPOINT: str = "http://host.docker.internal:4318"
+    OTEL_SERVICE_NAMESPACE: str = "opentelemetry"
+    OTEL_SERVICE_NAME: str = "worker"
+    OTEL_SAMPLE_RATIO: float = 1.0
+
 
 config = WorkerConfig()
