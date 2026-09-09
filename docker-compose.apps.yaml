@@ -58,6 +58,11 @@ services:
     environment:
       WORKER_REDIS_URL: redis://redis:6379
       WORKER_SERVICE_BASE_URL: http://service:8000/api/v1
+      WORKER_OTEL_ENABLED: "true"
+      WORKER_OTEL_ENDPOINT: http://host.docker.internal:4318
+      WORKER_OTEL_SERVICE_NAME: worker-api
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "8001:8000"
     depends_on:
@@ -80,6 +85,11 @@ services:
     environment:
       WORKER_REDIS_URL: redis://redis:6379
       WORKER_SERVICE_BASE_URL: http://service:8000/api/v1
+      WORKER_OTEL_ENABLED: "true"
+      WORKER_OTEL_ENDPOINT: http://host.docker.internal:4318
+      WORKER_OTEL_SERVICE_NAME: worker-worker
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       redis:
         condition: service_healthy

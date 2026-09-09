@@ -3,12 +3,20 @@ import random
 
 import httpx
 from asgi_correlation_id.context import correlation_id as correlation_id_ctx
-from fastapi import HTTPException
 from loguru import logger
 from saq import Queue
 
 from open_telemetry_experiment_worker.config import config
+from open_telemetry_experiment_worker.instrumentation import otel_context
 from open_telemetry_experiment_worker.repositories import CallbackRepository, ExternalApiRepository, ServiceRepository
+
+
+class EnqueueError(Exception):
+    pass
+
+
+class TaskError(Exception):
+    pass
 
 
 class EnqueueService:
@@ -20,7 +28,7 @@ class EnqueueService:
 
         if _should_fail(config.API_FAILURE_RATE):
             logger.error("Injected failure while enqueueing (request_id={request_id})", request_id=request_id)
-            raise HTTPException(status_code=500, detail="injected failure")
+            raise EnqueueError("injected failure")
 
         job = await self._queue.enqueue(
             "process_task",
@@ -28,6 +36,7 @@ class EnqueueService:
             text=text,
             callback_url=callback_url,
             correlation_id=correlation_id_ctx.get(),
+            otel_context=otel_context(),
         )
         return job.key if job else ""
 
@@ -47,11 +56,11 @@ class TaskService:
         logger.info("Processing job (request_id={request_id})", request_id=request_id)
         try:
             if _should_fail(config.WORKER_FAILURE_RATE):
-                raise RuntimeError("injected failure")
+                raise TaskError("injected failure")
             fact = await self._external.get_fact()
             processed = await self._service.process(text)
             result = json.dumps({**processed, "fact": fact})
-        except (httpx.HTTPError, RuntimeError) as error:
+        except (httpx.HTTPError, TaskError) as error:
             logger.error("Job failed (request_id={request_id}, error={error})", request_id=request_id, error=error)
             await self._callback.send(callback_url, {"request_id": request_id, "status": "failed", "error": str(error)})
             raise

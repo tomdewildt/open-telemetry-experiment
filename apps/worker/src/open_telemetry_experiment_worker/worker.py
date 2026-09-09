@@ -4,6 +4,7 @@ import httpx
 from asgi_correlation_id.context import correlation_id as correlation_id_ctx
 
 from open_telemetry_experiment_worker.config import config
+from open_telemetry_experiment_worker.instrumentation import SaqQueueMetrics, instrument_saq_job
 from open_telemetry_experiment_worker.logging import init_logging
 from open_telemetry_experiment_worker.queue import queue
 from open_telemetry_experiment_worker.repositories import (
@@ -12,6 +13,7 @@ from open_telemetry_experiment_worker.repositories import (
     HttpxServiceRepository,
 )
 from open_telemetry_experiment_worker.services import TaskService
+from open_telemetry_experiment_worker.telemetry import init_worker_telemetry
 
 
 async def _forward_correlation_id(request: httpx.Request) -> None:
@@ -22,6 +24,10 @@ async def _forward_correlation_id(request: httpx.Request) -> None:
 
 async def startup(ctx: dict[str, Any]) -> None:
     init_logging(config.ENV, config.LOG_LEVEL)
+    init_worker_telemetry()
+    if config.OTEL_ENABLED:
+        ctx["queue_metrics"] = SaqQueueMetrics(queue)
+        ctx["queue_metrics"].start()
     http_client = httpx.AsyncClient(timeout=15.0, event_hooks={"request": [_forward_correlation_id]})
     ctx["http_client"] = http_client
     ctx["task_service"] = TaskService(
@@ -32,16 +38,26 @@ async def startup(ctx: dict[str, Any]) -> None:
 
 
 async def shutdown(ctx: dict[str, Any]) -> None:
+    metrics = ctx.get("queue_metrics")
+    if metrics:
+        metrics.stop()
     await ctx["http_client"].aclose()
 
 
 async def process_task(
-    ctx: dict[str, Any], *, request_id: str, text: str, callback_url: str, correlation_id: str | None = None
+    ctx: dict[str, Any],
+    *,
+    request_id: str,
+    text: str,
+    callback_url: str,
+    correlation_id: str | None = None,
+    otel_context: dict[str, str] | None = None,
 ) -> str:
     if correlation_id:
         correlation_id_ctx.set(correlation_id)
     task_service: TaskService = ctx["task_service"]
-    return await task_service.process(request_id, text, callback_url)
+    async with instrument_saq_job(ctx["job"], otel_context):
+        return await task_service.process(request_id, text, callback_url)
 
 
 settings = {
