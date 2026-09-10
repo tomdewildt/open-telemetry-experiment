@@ -44,9 +44,12 @@ Run ```mise run dev:start``` to start only the apps without SigNoz.
 
 ### SigNoz
 
-1. Run ```mise run signoz:start``` to start SigNoz (UI at [http://localhost:8080](http://localhost:8080)).
-2. Run ```mise run signoz:stop``` to stop SigNoz.
-3. Run ```mise run signoz:logs``` to follow the SigNoz logs.
+SigNoz is deployed with [Foundry](https://github.com/SigNoz/foundry), and its dashboards are managed with Terraform.
+
+1. Run ```mise run //apps/signoz:start``` to start SigNoz (UI at [http://localhost:8080](http://localhost:8080)).
+2. Run ```mise run //apps/signoz:bootstrap``` to register the admin and generate a Terraform API token.
+3. Run ```mise run //apps/signoz:provision``` to provision the dashboards with Terraform.
+4. Run ```mise run //apps/signoz:stop``` to stop SigNoz, or ```mise run //apps/signoz:logs``` to follow the logs.
 
 # References
 
