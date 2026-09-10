@@ -105,6 +105,10 @@ services:
       WEB_DATABASE_URL: postgres://postgres:postgres@postgres:5432/postgres
       WEB_WORKER_API_BASE_URL: http://worker-api:8000/api/v1
       WEB_BASE_URL: http://web:3000
+      WEB_OTEL_ENABLED: "true"
+      WEB_OTEL_ENDPOINT: http://host.docker.internal:4318
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "3000:3000"
     depends_on:
