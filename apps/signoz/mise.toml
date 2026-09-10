@@ -21,15 +21,11 @@ depends = ["build"]
 run = "docker compose $COMPOSE_SIGNOZ up -d"
 
 [tasks.bootstrap]
-description = "Mint a signoz service-account token for terraform (writes terraform.auto.tfvars)"
+description = "Generate a signoz service-account token for terraform (writes terraform.tfvars)"
 run = "bash bootstrap.sh"
 
-[tasks.plan]
-description = "Plan the signoz terraform"
-run = "terraform -chdir=terraform plan"
-
-[tasks.apply]
-description = "Apply the signoz terraform"
+[tasks.provision]
+description = "Provision signoz"
 run = "terraform -chdir=terraform apply"
 
 [tasks.logs]
@@ -41,9 +37,12 @@ description = "Stop the signoz stack"
 run = "docker compose $COMPOSE_SIGNOZ down"
 
 [tasks.reset]
-description = "Reset the signoz stack (traces, logs, metrics)"
+description = "Reset the signoz stack and re-provision from scratch"
 run = [
     "docker compose $COMPOSE_SIGNOZ down -v",
-    "docker compose $COMPOSE_SIGNOZ up -d",
+    "rm -f terraform/terraform.tfstate terraform/terraform.tfstate.backup terraform/terraform.tfvars",
+    "docker compose $COMPOSE_SIGNOZ up -d --wait",
+    "bash bootstrap.sh",
+    "terraform -chdir=terraform apply -auto-approve",
 ]
 
