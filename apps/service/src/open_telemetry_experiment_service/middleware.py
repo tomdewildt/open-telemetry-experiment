@@ -26,7 +26,8 @@ class AccessLogMiddleware:
             raise exc
         finally:
             end_time = time.perf_counter()
-            self.log(scope, status_code, start_time, end_time)
+            if scope["path"] != "/health":
+                self.log(scope, status_code, start_time, end_time)
 
     @staticmethod
     def log(scope: Scope, status_code: int, start_time: float, end_time: float) -> None:
