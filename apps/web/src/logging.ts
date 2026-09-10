@@ -105,11 +105,7 @@ export function initAccessLog(): void {
   };
   const originalEmit = proto.emit;
 
-  proto.emit = function (
-    this: unknown,
-    event: string,
-    ...args: unknown[]
-  ): boolean {
+  proto.emit = function (this: unknown, event: string, ...args: unknown[]): boolean {
     if (event === "request") {
       const req = args[0] as http.IncomingMessage;
       const res = args[1] as http.ServerResponse;
@@ -121,8 +117,7 @@ export function initAccessLog(): void {
         const duration = Math.round(performance.now() - start);
         accessLogger.info(
           {
-            correlation_id:
-              typeof correlationId === "string" ? correlationId : undefined,
+            correlation_id: typeof correlationId === "string" ? correlationId : undefined,
             method: req.method,
             path: url,
             status: res.statusCode,
