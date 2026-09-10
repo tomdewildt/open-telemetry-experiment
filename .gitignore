@@ -484,3 +484,6 @@ $RECYCLE.BIN/
 # Signoz
 apps/signoz/foundry/bin
 apps/signoz/foundry/pours
+
+# Web (overrides the "[Ll]ib" section above)
+!apps/web/src/lib/
