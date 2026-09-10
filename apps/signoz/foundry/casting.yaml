@@ -7,13 +7,11 @@ spec:
     flavor: compose
     mode: docker
 
-  # Modern defaults: Postgres metastore + ClickHouse-Keeper (no JVM).
   metastore:
     kind: postgres
   telemetrykeeper:
     kind: clickhousekeeper
 
-  # Pin images for reproducibility instead of the generated `latest`.
   signoz:
     spec:
       image: signoz/signoz:v0.139.0
