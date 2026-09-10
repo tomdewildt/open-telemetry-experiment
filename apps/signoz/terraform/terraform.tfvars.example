@@ -1,0 +1,2 @@
+signoz_endpoint = "http://localhost:8080"
+signoz_access_token = "<token>"
