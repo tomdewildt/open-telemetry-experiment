@@ -25,10 +25,12 @@ const LEVEL_COLORS: Record<string, string> = {
   fatal: "\x1b[41m",
 };
 
-const GREEN = "\x1b[32m";
-const CYAN = "\x1b[36m";
-const BLUE = "\x1b[34m";
-const RESET = "\x1b[0m";
+// Only emit ANSI colors on a terminal, so docker/piped output stays plain (matches loguru).
+const useColor = Boolean(process.stdout.isTTY);
+const GREEN = useColor ? "\x1b[32m" : "";
+const CYAN = useColor ? "\x1b[36m" : "";
+const BLUE = useColor ? "\x1b[34m" : "";
+const RESET = useColor ? "\x1b[0m" : "";
 
 function formatTime(epochMs: number): string {
   const date = new Date(epochMs);
@@ -51,7 +53,7 @@ const prettyStream = new Writable({
     }
 
     const level = record.level as string;
-    const color = LEVEL_COLORS[level] ?? "";
+    const color = useColor ? (LEVEL_COLORS[level] ?? "") : "";
     const levelName = (LEVEL_NAMES[level] ?? level.toUpperCase()).padEnd(8);
     const time = formatTime(record.time as number);
     const name = (record.name as string) ?? "-";
@@ -112,7 +114,7 @@ export function initAccessLog(): void {
       const start = performance.now();
       res.on("finish", () => {
         const url = req.url ?? "";
-        if (url.startsWith("/_next/") || url === "/favicon.ico") return;
+        if (url.startsWith("/_next/") || url === "/favicon.ico" || url === "/api/health") return;
         const correlationId = res.getHeader("x-request-id");
         const duration = Math.round(performance.now() - start);
         accessLogger.info(
