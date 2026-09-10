@@ -9,8 +9,7 @@ type Handler = (request: Request) => Promise<Response> | Response;
 // Binds the request-id context (for in-handler logs) and normalizes thrown errors.
 export function withApi(handler: Handler) {
   return async (request: Request): Promise<Response> => {
-    const requestId =
-      request.headers.get("x-request-id") ?? crypto.randomUUID();
+    const requestId = request.headers.get("x-request-id") ?? crypto.randomUUID();
 
     return requestContext.run({ requestId }, async () => {
       try {
@@ -26,10 +25,7 @@ export function withApi(handler: Handler) {
           );
         }
         logger.error({ err: error }, "Unhandled error");
-        return NextResponse.json(
-          { message: "Internal server error" },
-          { status: 500 },
-        );
+        return NextResponse.json({ message: "Internal server error" }, { status: 500 });
       }
     });
   };
