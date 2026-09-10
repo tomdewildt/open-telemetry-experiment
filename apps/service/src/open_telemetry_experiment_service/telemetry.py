@@ -31,11 +31,11 @@ from opentelemetry.sdk.trace.sampling import ParentBased, TraceIdRatioBased
 from open_telemetry_experiment_service.config import config
 
 
-def _flatten(key: str, value: Any) -> dict[str, Any]:
+def _flatten_key_value_pair(key: str, value: Any) -> dict[str, Any]:
     if isinstance(value, dict):
         flattened: dict[str, Any] = {}
         for sub_key, sub_value in value.items():
-            flattened.update(_flatten(f"{key}.{sub_key}", sub_value))
+            flattened.update(_flatten_key_value_pair(f"{key}.{sub_key}", sub_value))
         return flattened
     return {key: value}
 
@@ -49,7 +49,7 @@ class _FlatteningLoggingHandler(LoggingHandler):
         extra = attributes.pop("extra", None)
         if isinstance(extra, dict):
             for key, value in extra.items():
-                attributes.update(_flatten(key, value))
+                attributes.update(_flatten_key_value_pair(key, value))
         return attributes
 
 
