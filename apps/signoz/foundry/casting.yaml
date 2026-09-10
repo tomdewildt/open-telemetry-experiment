@@ -1,0 +1,24 @@
+apiVersion: v1alpha1
+kind: Installation
+metadata:
+  name: signoz
+spec:
+  deployment:
+    flavor: compose
+    mode: docker
+
+  # Modern defaults: Postgres metastore + ClickHouse-Keeper (no JVM).
+  metastore:
+    kind: postgres
+  telemetrykeeper:
+    kind: clickhousekeeper
+
+  # Pin images for reproducibility instead of the generated `latest`.
+  signoz:
+    spec:
+      image: signoz/signoz:v0.139.0
+      version: v0.139.0
+  ingester:
+    spec:
+      image: signoz/signoz-otel-collector:v0.144.8
+      version: v0.144.8
