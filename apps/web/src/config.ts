@@ -15,4 +15,10 @@ export const config = {
   BASE_URL: process.env.WEB_BASE_URL ?? "http://web:3000",
 
   SERVER_FAILURE_RATE: parseRate(process.env.WEB_SERVER_FAILURE_RATE, 0.1),
+
+  OTEL_ENABLED: process.env.WEB_OTEL_ENABLED === "true",
+  OTEL_ENDPOINT: process.env.WEB_OTEL_ENDPOINT ?? "http://host.docker.internal:4318",
+  OTEL_SERVICE_NAMESPACE: process.env.WEB_OTEL_SERVICE_NAMESPACE ?? "opentelemetry",
+  OTEL_SERVICE_NAME: process.env.WEB_OTEL_SERVICE_NAME ?? "web",
+  OTEL_SAMPLE_RATIO: parseRate(process.env.WEB_OTEL_SAMPLE_RATIO, 1.0),
 } as const;
