@@ -1,0 +1,49 @@
+[tools]
+terraform = "1.15"
+
+[env]
+COMPOSE_SIGNOZ = "-f foundry/pours/deployment/compose.yaml"
+
+[tasks.init]
+description = "Install foundryctl and initialize terraform"
+run = [
+    'curl -fsSL https://signoz.io/foundry.sh | FOUNDRY_INSTALL_DIR="$PWD/foundry/bin" bash',
+    "terraform -chdir=terraform init",
+]
+
+[tasks.build]
+description = "Build the signoz deployment manifests"
+run = "foundry/bin/foundryctl forge -f foundry/casting.yaml -p foundry/pours"
+
+[tasks.start]
+description = "Start the signoz stack"
+depends = ["build"]
+run = "docker compose $COMPOSE_SIGNOZ up -d"
+
+[tasks.bootstrap]
+description = "Mint a signoz service-account token for terraform (writes terraform.auto.tfvars)"
+run = "bash bootstrap.sh"
+
+[tasks.plan]
+description = "Plan the signoz terraform"
+run = "terraform -chdir=terraform plan"
+
+[tasks.apply]
+description = "Apply the signoz terraform"
+run = "terraform -chdir=terraform apply"
+
+[tasks.logs]
+description = "Follow the signoz stack logs"
+run = "docker compose $COMPOSE_SIGNOZ logs -f"
+
+[tasks.stop]
+description = "Stop the signoz stack"
+run = "docker compose $COMPOSE_SIGNOZ down"
+
+[tasks.reset]
+description = "Reset the signoz stack (traces, logs, metrics)"
+run = [
+    "docker compose $COMPOSE_SIGNOZ down -v",
+    "docker compose $COMPOSE_SIGNOZ up -d",
+]
+
