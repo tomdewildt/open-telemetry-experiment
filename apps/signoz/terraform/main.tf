@@ -333,7 +333,7 @@ resource "signoz_dashboard" "http_red" {
                       step_interval = "60"
                       signal        = "traces"
                       aggregations  = [{ expression = "rate()" }]
-                      filter        = { expression = "http.route EXISTS" }
+                      filter        = { expression = "http.route EXISTS AND http.route NOT IN ['/health', '/api/health']" }
                       group_by = [
                         { name = "service.name", field_context = "resource", field_data_type = "string" },
                         { name = "http.route", field_context = "attribute", field_data_type = "string" },
@@ -378,7 +378,7 @@ resource "signoz_dashboard" "http_red" {
                       step_interval = "60"
                       signal        = "traces"
                       aggregations  = [{ expression = "p99(duration_nano)" }]
-                      filter        = { expression = "http.route EXISTS" }
+                      filter        = { expression = "http.route EXISTS AND http.route NOT IN ['/health', '/api/health']" }
                       group_by = [
                         { name = "service.name", field_context = "resource", field_data_type = "string" },
                         { name = "http.route", field_context = "attribute", field_data_type = "string" },
@@ -423,7 +423,7 @@ resource "signoz_dashboard" "http_red" {
                       step_interval = "60"
                       signal        = "traces"
                       aggregations  = [{ expression = "rate()" }]
-                      filter        = { expression = "http.route EXISTS AND http.response.status_code >= 500" }
+                      filter        = { expression = "http.route EXISTS AND http.route NOT IN ['/health', '/api/health'] AND http.response.status_code >= 500" }
                       group_by = [
                         { name = "service.name", field_context = "resource", field_data_type = "string" },
                         { name = "http.route", field_context = "attribute", field_data_type = "string" },
