@@ -14,6 +14,7 @@
     "types": "tsc --noEmit"
   },
   "dependencies": {
+    "@kubiks/otel-drizzle": "^2.1.0",
     "@opentelemetry/api": "^1.9.1",
     "@opentelemetry/core": "^2.0.0",
     "@opentelemetry/exporter-logs-otlp-proto": "^0.222.0",
