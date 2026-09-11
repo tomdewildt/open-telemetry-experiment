@@ -6,7 +6,7 @@ import { requests } from "@/db/schema";
 import { withApi } from "@/lib/api";
 import { shouldFail } from "@/lib/failure";
 import { submitSchema } from "@/lib/schemas";
-import { getLogger, getRequestId } from "@/logging";
+import { getLogger } from "@/logging";
 
 const logger = getLogger("app.api.submit");
 
@@ -17,7 +17,6 @@ export const POST = withApi(async (request) => {
 
   const { text } = submitSchema.parse(await request.json());
   const requestId = crypto.randomUUID();
-  const correlationId = getRequestId();
 
   await db.insert(requests).values({ requestId, text });
 
@@ -26,7 +25,6 @@ export const POST = withApi(async (request) => {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        ...(correlationId ? { "x-request-id": correlationId } : {}),
       },
       body: JSON.stringify({
         request_id: requestId,
