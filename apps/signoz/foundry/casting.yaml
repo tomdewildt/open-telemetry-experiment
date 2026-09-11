@@ -20,3 +20,16 @@ spec:
     spec:
       image: signoz/signoz-otel-collector:v0.144.8
       version: v0.144.8
+      # Let the browser RUM SDK post spans straight to the OTLP HTTP receiver.
+      config:
+        data:
+          ingester.yaml: |
+            receivers:
+              otlp:
+                protocols:
+                  http:
+                    cors:
+                      allowed_origins:
+                        - http://localhost:3000
+                      allowed_headers:
+                        - Content-Type
