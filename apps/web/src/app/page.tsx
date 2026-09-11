@@ -1,7 +1,10 @@
 "use client";
 
 import { parseRate, shouldFail } from "@/lib/failure";
+import { SpanStatusCode, trace } from "@opentelemetry/api";
 import { useEffect, useState } from "react";
+
+const tracer = trace.getTracer("app.ui");
 
 type RequestRow = {
   id: number;
@@ -23,18 +26,27 @@ export default function Home() {
 
   async function submit() {
     if (!text.trim()) return;
-    if (shouldFail(parseRate(process.env.NEXT_PUBLIC_WEB_CLIENT_FAILURE_RATE, 0.1))) {
-      console.error("injected client failure");
-      setText("");
-      return;
-    }
-    await fetch("/api/submit", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ text }),
+    await tracer.startActiveSpan("ui.submit", async (span) => {
+      try {
+        if (shouldFail(parseRate(process.env.NEXT_PUBLIC_WEB_CLIENT_FAILURE_RATE, 0.1))) {
+          const error = new Error("injected client failure");
+          span.recordException(error);
+          span.setStatus({ code: SpanStatusCode.ERROR, message: error.message });
+          console.error("injected client failure");
+          setText("");
+          return;
+        }
+        await fetch("/api/submit", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ text }),
+        });
+        setText("");
+        await refresh();
+      } finally {
+        span.end();
+      }
     });
-    setText("");
-    await refresh();
   }
 
   useEffect(() => {

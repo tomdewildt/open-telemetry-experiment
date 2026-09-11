@@ -12,6 +12,11 @@ CMD ["sh", "-c", "bunx drizzle-kit push && bun run dev"]
 
 # Builder
 FROM deps AS builder
+# NEXT_PUBLIC_* vars are inlined into the client bundle at build time, so they must be present here.
+ARG NEXT_PUBLIC_WEB_OTEL_ENABLED
+ARG NEXT_PUBLIC_WEB_OTEL_ENDPOINT
+ENV NEXT_PUBLIC_WEB_OTEL_ENABLED=${NEXT_PUBLIC_WEB_OTEL_ENABLED}
+ENV NEXT_PUBLIC_WEB_OTEL_ENDPOINT=${NEXT_PUBLIC_WEB_OTEL_ENDPOINT}
 COPY . .
 RUN bun run build
 
