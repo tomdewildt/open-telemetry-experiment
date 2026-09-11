@@ -99,7 +99,12 @@ services:
       - apps-network
 
   web:
-    build: ./apps/web
+    build:
+      context: ./apps/web
+      args:
+        NEXT_PUBLIC_WEB_OTEL_ENABLED: "true"
+        # The browser reaches SigNoz on the host, not the container network.
+        NEXT_PUBLIC_WEB_OTEL_ENDPOINT: http://localhost:4318
     container_name: open-telemetry-experiment-web
     environment:
       WEB_DATABASE_URL: postgres://postgres:postgres@postgres:5432/postgres
