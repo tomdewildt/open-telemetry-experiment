@@ -2,7 +2,6 @@ import json
 import random
 
 import httpx
-from asgi_correlation_id.context import correlation_id as correlation_id_ctx
 from loguru import logger
 from saq import Queue
 
@@ -35,7 +34,6 @@ class EnqueueService:
             request_id=request_id,
             text=text,
             callback_url=callback_url,
-            correlation_id=correlation_id_ctx.get(),
             otel_context=otel_context(),
         )
         return job.key if job else ""

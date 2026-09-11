@@ -1,4 +1,3 @@
-from asgi_correlation_id import CorrelationIdMiddleware
 from fastapi import APIRouter, FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError, ResponseValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -33,7 +32,6 @@ def create_app() -> FastAPI:
     )
 
     # Define middleware
-    app.add_middleware(CorrelationIdMiddleware)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=config.CORS_ALLOW_ORIGINS,

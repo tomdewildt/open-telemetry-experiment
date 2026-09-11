@@ -40,8 +40,8 @@ class WorkerConfig(BaseSettings):
 
     CORS_ALLOW_ORIGINS: Sequence[str] = ("*",)
     CORS_ALLOW_METHODS: Sequence[str] = ("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
-    CORS_ALLOW_HEADERS: Sequence[str] = ("X-Requested-With", "X-Request-ID")
-    CORS_EXPOSE_HEADERS: Sequence[str] = ("X-Request-ID",)
+    CORS_ALLOW_HEADERS: Sequence[str] = ("X-Requested-With",)
+    CORS_EXPOSE_HEADERS: Sequence[str] = ()
 
     REDIS_URL: str = "redis://redis:6379"
 
