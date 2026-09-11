@@ -4,7 +4,7 @@ import logging
 import sys
 
 import loguru
-from asgi_correlation_id.context import correlation_id
+from opentelemetry import trace
 
 from open_telemetry_experiment_worker.config import Environment, LogLevel
 
@@ -28,14 +28,15 @@ class _InterceptHandler(logging.Handler):
         patched.opt(exception=record.exc_info).log(level, record.getMessage())
 
 
-def _correlation_id_patcher(record: loguru.Record) -> None:
-    record["extra"]["correlation_id"] = correlation_id.get() or ""
+def _trace_id_patcher(record: loguru.Record) -> None:
+    span_context = trace.get_current_span().get_span_context()
+    record["extra"]["trace_id"] = format(span_context.trace_id, "032x") if span_context.is_valid else ""
 
 
 def _log_format(record: loguru.Record) -> str:
     base = "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan>"  # noqa: E501
-    if record["extra"].get("correlation_id"):
-        base += " | <blue>[{extra[correlation_id]}]</blue>"
+    if record["extra"].get("trace_id"):
+        base += " | <blue>[{extra[trace_id]}]</blue>"
     return base + " - <level>{message}</level>\n{exception}"
 
 
@@ -61,5 +62,5 @@ def init_logging(env: Environment, level: LogLevel) -> None:
                 "serialize": should_serialize,
             },
         ],
-        patcher=_correlation_id_patcher,
+        patcher=_trace_id_patcher,
     )

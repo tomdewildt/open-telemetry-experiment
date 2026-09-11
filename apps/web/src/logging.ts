@@ -1,11 +1,9 @@
 import { config } from "@/config";
-import { AsyncLocalStorage } from "node:async_hooks";
+import { trace } from "@opentelemetry/api";
 import http from "node:http";
 import { Writable } from "node:stream";
 import { format } from "node:util";
 import pino from "pino";
-
-export const requestContext = new AsyncLocalStorage<{ requestId: string }>();
 
 const LEVEL_NAMES: Record<string, string> = {
   trace: "TRACE",
@@ -57,11 +55,11 @@ const prettyStream = new Writable({
     const levelName = (LEVEL_NAMES[level] ?? level.toUpperCase()).padEnd(8);
     const time = formatTime(record.time as number);
     const name = (record.name as string) ?? "-";
-    const correlationId = record.correlation_id as string | undefined;
-    const cid = correlationId ? ` | ${BLUE}[${correlationId}]${RESET}` : "";
+    const traceId = record.trace_id as string | undefined;
+    const tid = traceId ? ` | ${BLUE}[${traceId}]${RESET}` : "";
     const stack = (record.err as { stack?: string } | undefined)?.stack;
 
-    let line = `${GREEN}${time}${RESET} | ${color}${levelName}${RESET} | ${CYAN}${name}${RESET}${cid} - ${color}${record.msg}${RESET}\n`;
+    let line = `${GREEN}${time}${RESET} | ${color}${levelName}${RESET} | ${CYAN}${name}${RESET}${tid} - ${color}${record.msg}${RESET}\n`;
     if (stack) line += `${stack}\n`;
 
     process.stdout.write(line);
@@ -78,8 +76,8 @@ export const logger = pino(
     },
     serializers: { err: pino.stdSerializers.err },
     mixin() {
-      const store = requestContext.getStore();
-      return store ? { correlation_id: store.requestId } : {};
+      const traceId = trace.getActiveSpan()?.spanContext().traceId;
+      return traceId ? { trace_id: traceId } : {};
     },
   },
   config.ENV === "dev" ? prettyStream : process.stdout,
@@ -87,10 +85,6 @@ export const logger = pino(
 
 export function getLogger(name: string) {
   return logger.child({ name });
-}
-
-export function getRequestId(): string | undefined {
-  return requestContext.getStore()?.requestId;
 }
 
 // Patch node's http server to log every request on finish, which is the only place in Next.js that sees
@@ -115,11 +109,9 @@ export function initAccessLog(): void {
       res.on("finish", () => {
         const url = req.url ?? "";
         if (url.startsWith("/_next/") || url === "/favicon.ico" || url === "/api/health") return;
-        const correlationId = res.getHeader("x-request-id");
         const duration = Math.round(performance.now() - start);
         accessLogger.info(
           {
-            correlation_id: typeof correlationId === "string" ? correlationId : undefined,
             method: req.method,
             path: url,
             status: res.statusCode,

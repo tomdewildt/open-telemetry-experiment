@@ -4,7 +4,6 @@ version = "0.1.0"
 description = "Example service that processes requests locally"
 requires-python = ">=3.12"
 dependencies = [
-    "asgi-correlation-id>=4.3.4",
     "fastapi>=0.115.0",
     "loguru>=0.7.3",
     "opentelemetry-exporter-otlp-proto-http>=1.44.0",

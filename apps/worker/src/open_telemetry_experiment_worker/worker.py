@@ -1,7 +1,6 @@
 from typing import Any
 
 import httpx
-from asgi_correlation_id.context import correlation_id as correlation_id_ctx
 
 from open_telemetry_experiment_worker.config import config
 from open_telemetry_experiment_worker.instrumentation import SaqQueueMetrics, instrument_saq_job
@@ -16,19 +15,13 @@ from open_telemetry_experiment_worker.services import TaskService
 from open_telemetry_experiment_worker.telemetry import init_worker_telemetry
 
 
-async def _forward_correlation_id(request: httpx.Request) -> None:
-    cid = correlation_id_ctx.get()
-    if cid:
-        request.headers["X-Request-ID"] = cid
-
-
 async def startup(ctx: dict[str, Any]) -> None:
     init_logging(config.ENV, config.LOG_LEVEL)
     init_worker_telemetry()
     if config.OTEL_ENABLED:
         ctx["queue_metrics"] = SaqQueueMetrics(queue)
         ctx["queue_metrics"].start()
-    http_client = httpx.AsyncClient(timeout=15.0, event_hooks={"request": [_forward_correlation_id]})
+    http_client = httpx.AsyncClient(timeout=15.0)
     ctx["http_client"] = http_client
     ctx["task_service"] = TaskService(
         HttpxExternalApiRepository(http_client, config.EXTERNAL_API_BASE_URL),
@@ -50,11 +43,8 @@ async def process_task(
     request_id: str,
     text: str,
     callback_url: str,
-    correlation_id: str | None = None,
     otel_context: dict[str, str] | None = None,
 ) -> str:
-    if correlation_id:
-        correlation_id_ctx.set(correlation_id)
     task_service: TaskService = ctx["task_service"]
     async with instrument_saq_job(ctx["job"], otel_context):
         return await task_service.process(request_id, text, callback_url)
