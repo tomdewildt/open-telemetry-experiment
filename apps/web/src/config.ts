@@ -19,6 +19,6 @@ export const config = {
   OTEL_ENABLED: process.env.WEB_OTEL_ENABLED === "true",
   OTEL_ENDPOINT: process.env.WEB_OTEL_ENDPOINT ?? "http://host.docker.internal:4318",
   OTEL_SERVICE_NAMESPACE: process.env.WEB_OTEL_SERVICE_NAMESPACE ?? "opentelemetry",
-  OTEL_SERVICE_NAME: process.env.WEB_OTEL_SERVICE_NAME ?? "web",
+  OTEL_SERVICE_NAME: process.env.WEB_OTEL_SERVICE_NAME ?? "web-server",
   OTEL_SAMPLE_RATIO: parseRate(process.env.WEB_OTEL_SAMPLE_RATIO, 1.0),
 } as const;
