@@ -31,6 +31,31 @@ services:
       timeout: 5s
       retries: 5
 
+  collector:
+    image: otel/opentelemetry-collector-contrib:0.161.0
+    container_name: open-telemetry-experiment-collector
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    user: "0:0"
+    environment:
+      COLLECTOR_POSTGRES_ENDPOINT: postgres:5432
+      COLLECTOR_POSTGRES_USER: postgres
+      COLLECTOR_POSTGRES_PASSWORD: postgres
+      COLLECTOR_POSTGRES_DB: postgres
+      COLLECTOR_REDIS_ENDPOINT: redis:6379
+      COLLECTOR_HOST_NAME: ${COLLECTOR_HOST_NAME:-localhost}
+    volumes:
+      - ./apps/collector/collector.yaml:/etc/otelcol-contrib/config.yaml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - apps-network
+
   service:
     build: ./apps/service
     container_name: open-telemetry-experiment-service
