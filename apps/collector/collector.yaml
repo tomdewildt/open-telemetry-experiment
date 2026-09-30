@@ -1,0 +1,63 @@
+receivers:
+  # On a real Linux host, mount '/:/hostfs:ro' and set 'root_path: /hostfs' for true host metrics
+  host_metrics:
+    collection_interval: 30s
+    scrapers:
+      cpu:
+        metrics:
+          system.cpu.utilization:
+            enabled: true
+      load: {}
+      memory:
+        metrics:
+          system.memory.utilization:
+            enabled: true
+      disk: {}
+      filesystem: {}
+      network: {}
+
+  docker_stats:
+    endpoint: unix:///var/run/docker.sock
+    collection_interval: 30s
+
+  postgresql:
+    endpoint: ${env:COLLECTOR_POSTGRES_ENDPOINT}
+    username: ${env:COLLECTOR_POSTGRES_USER}
+    password: ${env:COLLECTOR_POSTGRES_PASSWORD}
+    databases:
+      - ${env:COLLECTOR_POSTGRES_DB}
+    collection_interval: 30s
+    tls:
+      insecure: true
+
+  redis:
+    endpoint: ${env:COLLECTOR_REDIS_ENDPOINT}
+    collection_interval: 30s
+    tls:
+      insecure: true
+
+processors:
+  resource_detection:
+    detectors: [env, system]
+    system:
+      hostname_sources: [os]
+  resource:
+    attributes:
+      - key: host.name
+        value: ${env:COLLECTOR_HOST_NAME}
+        action: upsert
+  batch: {}
+
+exporters:
+  otlp_http:
+    endpoint: http://host.docker.internal:4318
+
+service:
+  telemetry:
+    logs:
+      level: info
+  pipelines:
+    metrics:
+      receivers: [host_metrics, docker_stats, postgresql, redis]
+      processors: [resource_detection, resource, batch]
+      exporters: [otlp_http]
