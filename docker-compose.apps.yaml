@@ -3,9 +3,9 @@ services:
     image: postgres:16-alpine
     container_name: open-telemetry-experiment-postgres
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: postgres
+      POSTGRES_USER: ${POSTGRES_USER:?}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+      POSTGRES_DB: ${POSTGRES_DB:?}
     ports:
       - "5432:5432"
     volumes:
@@ -37,12 +37,14 @@ services:
     command: ["--config=/etc/otelcol-contrib/config.yaml"]
     user: "0:0"
     environment:
-      COLLECTOR_POSTGRES_ENDPOINT: postgres:5432
-      COLLECTOR_POSTGRES_USER: postgres
-      COLLECTOR_POSTGRES_PASSWORD: postgres
-      COLLECTOR_POSTGRES_DB: postgres
-      COLLECTOR_REDIS_ENDPOINT: redis:6379
       COLLECTOR_HOST_NAME: ${COLLECTOR_HOST_NAME:-localhost}
+      COLLECTOR_POSTGRES_HOST: ${POSTGRES_HOST:?}
+      COLLECTOR_POSTGRES_PORT: ${POSTGRES_PORT:?}
+      COLLECTOR_POSTGRES_USER: ${POSTGRES_USER:?}
+      COLLECTOR_POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+      COLLECTOR_POSTGRES_DB: ${POSTGRES_DB:?}
+      COLLECTOR_REDIS_HOST: ${REDIS_HOST:?}
+      COLLECTOR_REDIS_PORT: ${REDIS_PORT:?}
     volumes:
       - ./apps/collector/collector.yaml:/etc/otelcol-contrib/config.yaml:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -81,7 +83,9 @@ services:
     container_name: open-telemetry-experiment-worker-api
     command: uv run uvicorn open_telemetry_experiment_worker.app:create_app --factory --host 0.0.0.0 --port 8000
     environment:
-      WORKER_REDIS_URL: redis://redis:6379
+      WORKER_REDIS_HOST: ${REDIS_HOST:?}
+      WORKER_REDIS_PORT: ${REDIS_PORT:?}
+      WORKER_EXTERNAL_API_BASE_URL: https://uselessfacts.jsph.pl/api/v2
       WORKER_SERVICE_BASE_URL: http://service:8000/api/v1
       WORKER_OTEL_ENABLED: "true"
       WORKER_OTEL_ENDPOINT: http://host.docker.internal:4318
@@ -108,7 +112,9 @@ services:
     container_name: open-telemetry-experiment-worker-worker
     command: uv run saq open_telemetry_experiment_worker.worker.settings
     environment:
-      WORKER_REDIS_URL: redis://redis:6379
+      WORKER_REDIS_HOST: ${REDIS_HOST:?}
+      WORKER_REDIS_PORT: ${REDIS_PORT:?}
+      WORKER_EXTERNAL_API_BASE_URL: https://uselessfacts.jsph.pl/api/v2
       WORKER_SERVICE_BASE_URL: http://service:8000/api/v1
       WORKER_OTEL_ENABLED: "true"
       WORKER_OTEL_ENDPOINT: http://host.docker.internal:4318
@@ -132,9 +138,13 @@ services:
         NEXT_PUBLIC_WEB_OTEL_ENDPOINT: http://localhost:4318
     container_name: open-telemetry-experiment-web
     environment:
-      WEB_DATABASE_URL: postgres://postgres:postgres@postgres:5432/postgres
-      WEB_WORKER_API_BASE_URL: http://worker-api:8000/api/v1
       WEB_BASE_URL: http://web:3000
+      WEB_POSTGRES_HOST: ${POSTGRES_HOST:?}
+      WEB_POSTGRES_PORT: ${POSTGRES_PORT:?}
+      WEB_POSTGRES_USER: ${POSTGRES_USER:?}
+      WEB_POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+      WEB_POSTGRES_DB: ${POSTGRES_DB:?}
+      WEB_WORKER_API_BASE_URL: http://worker-api:8000/api/v1
       WEB_OTEL_ENABLED: "true"
       WEB_OTEL_ENDPOINT: http://host.docker.internal:4318
     extra_hosts:
