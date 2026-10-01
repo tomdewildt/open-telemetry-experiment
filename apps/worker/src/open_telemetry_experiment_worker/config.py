@@ -1,7 +1,8 @@
 from collections.abc import Sequence
 from enum import StrEnum
 
-from pydantic import computed_field
+from pydantic import ValidationInfo, computed_field, field_validator
+from pydantic_core import PydanticCustomError
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -43,20 +44,33 @@ class WorkerConfig(BaseSettings):
     CORS_ALLOW_HEADERS: Sequence[str] = ("X-Requested-With",)
     CORS_EXPOSE_HEADERS: Sequence[str] = ()
 
-    REDIS_URL: str = "redis://redis:6379"
+    REDIS_HOST: str
+    REDIS_PORT: int
 
-    SERVICE_BASE_URL: str = "http://service:8000/api/v1"
+    @computed_field
+    @property
+    def REDIS_URL(self) -> str:  # noqa: N802
+        return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}"
 
-    EXTERNAL_API_BASE_URL: str = "https://uselessfacts.jsph.pl/api/v2"
+    SERVICE_BASE_URL: str
+
+    EXTERNAL_API_BASE_URL: str
 
     API_FAILURE_RATE: float = 0.1
     WORKER_FAILURE_RATE: float = 0.1
 
     OTEL_ENABLED: bool = False
-    OTEL_ENDPOINT: str = "http://host.docker.internal:4318"
+    OTEL_ENDPOINT: str = ""
     OTEL_SERVICE_NAMESPACE: str = "opentelemetry"
     OTEL_SERVICE_NAME: str = "worker"
     OTEL_SAMPLE_RATIO: float = 1.0
 
+    @field_validator("OTEL_ENDPOINT", mode="after")
+    @classmethod
+    def _require_otel_endpoint(cls, value: str, info: ValidationInfo) -> str:
+        if info.data.get("OTEL_ENABLED") and not value:
+            raise PydanticCustomError("missing", "Field required")
+        return value
 
-config = WorkerConfig()
+
+config = WorkerConfig()  # pyright: ignore[reportCallIssue]
