@@ -36,6 +36,10 @@ run = "docker compose $COMPOSE_APPS_DEV up --build"
 description = "Run the apps (prod)"
 run = "docker compose $COMPOSE_APPS_PROD up --build"
 
+[tasks.seed]
+description = "Seed the web api with sample requests (arg: count, default 20)"
+run = "./scripts/seed.sh"
+
 [tasks.lint]
 description = "Run lint check for all apps"
 run = "mise run //apps/...:lint"
