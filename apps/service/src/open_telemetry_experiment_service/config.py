@@ -1,7 +1,8 @@
 from collections.abc import Sequence
 from enum import StrEnum
 
-from pydantic import computed_field
+from pydantic import ValidationInfo, computed_field, field_validator
+from pydantic_core import PydanticCustomError
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -46,10 +47,17 @@ class ServiceConfig(BaseSettings):
     FAILURE_RATE: float = 0.3
 
     OTEL_ENABLED: bool = False
-    OTEL_ENDPOINT: str = "http://host.docker.internal:4318"
+    OTEL_ENDPOINT: str = ""
     OTEL_SERVICE_NAMESPACE: str = "opentelemetry"
     OTEL_SERVICE_NAME: str = "service"
     OTEL_SAMPLE_RATIO: float = 1.0
+
+    @field_validator("OTEL_ENDPOINT", mode="after")
+    @classmethod
+    def _require_otel_endpoint(cls, value: str, info: ValidationInfo) -> str:
+        if info.data.get("OTEL_ENABLED") and not value:
+            raise PydanticCustomError("missing", "Field required")
+        return value
 
 
 config = ServiceConfig()

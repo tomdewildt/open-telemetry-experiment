@@ -21,7 +21,7 @@ receivers:
     collection_interval: 30s
 
   postgresql:
-    endpoint: ${env:COLLECTOR_POSTGRES_ENDPOINT}
+    endpoint: ${env:COLLECTOR_POSTGRES_HOST}:${env:COLLECTOR_POSTGRES_PORT}
     username: ${env:COLLECTOR_POSTGRES_USER}
     password: ${env:COLLECTOR_POSTGRES_PASSWORD}
     databases:
@@ -31,7 +31,7 @@ receivers:
       insecure: true
 
   redis:
-    endpoint: ${env:COLLECTOR_REDIS_ENDPOINT}
+    endpoint: ${env:COLLECTOR_REDIS_HOST}:${env:COLLECTOR_REDIS_PORT}
     collection_interval: 30s
     tls:
       insecure: true

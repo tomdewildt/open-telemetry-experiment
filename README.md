@@ -31,10 +31,11 @@ Prerequisites:
 
 ### Development
 
-1. Run ```mise run init``` to install dependencies.
-2. Run ```mise run start``` to start the apps and SigNoz (dev, hot reload).
-3. Open [http://localhost:3000](http://localhost:3000) and submit some text. The row moves from `pending` to `done` (or `failed` when a stage injects an error).
-4. Open [http://localhost:8080](http://localhost:8080) for the SigNoz UI.
+1. Copy ```.env.example``` to ```.env``` and optionally edit it to override the default config.
+2. Run ```mise run init``` to install dependencies.
+3. Run ```mise run start``` to start the apps and SigNoz (dev, hot reload).
+4. Open [http://localhost:3000](http://localhost:3000) and submit some text. The row moves from `pending` to `done` (or `failed` when a stage injects an error).
+5. Open [http://localhost:8080](http://localhost:8080) for the SigNoz UI.
 
 Run ```mise run dev:start``` to start only the apps without SigNoz.
 

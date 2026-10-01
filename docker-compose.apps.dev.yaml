@@ -10,8 +10,6 @@ services:
     command: uv run uvicorn open_telemetry_experiment_worker.app:create_app --factory --host 0.0.0.0 --port 8000 --reload
     environment:
       WORKER_ENV: dev
-      WORKER_REDIS_URL: redis://redis:6379
-      WORKER_SERVICE_BASE_URL: http://service:8000/api/v1
     volumes:
       - ./apps/worker/src:/app/src
 
@@ -19,8 +17,6 @@ services:
     command: uv run watchfiles "saq open_telemetry_experiment_worker.worker.settings" /app/src
     environment:
       WORKER_ENV: dev
-      WORKER_REDIS_URL: redis://redis:6379
-      WORKER_SERVICE_BASE_URL: http://service:8000/api/v1
     volumes:
       - ./apps/worker/src:/app/src
 
